@@ -17,6 +17,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.alexapp.components.AuthState
 import com.example.alexapp.components.History
+import com.example.alexapp.components.NetworkState
 import com.example.alexapp.components.PerformanceQueue
 import com.example.alexapp.ui.theme.AlexAppTheme
 import kotlinx.coroutines.flow.map
@@ -55,13 +56,16 @@ class MainActivity : ComponentActivity() {
 
   @Composable
   private fun AlexScaffold(authState: AuthState, history: History) {
-    val queue by rememberSaveable { mutableStateOf(PerformanceQueue()) }
+    val queue = PerformanceQueue()
     val transientHistory by rememberSaveable { mutableStateOf(history.deserialized) }
     var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
+    val scaffoldState = rememberScaffoldState()
+    val networkState = NetworkState(scaffoldState.snackbarHostState)
 
     Scaffold(
-      drawerContent = { authState.AuthDrawer { /* TODO */ } },
-      floatingActionButton = { queue.RefreshButton { emptySequence() /* TODO */ } },
+      scaffoldState = scaffoldState,
+      drawerContent = { authState.AuthDrawer(networkState::auth) },
+      floatingActionButton = { queue.RefreshButton(networkState::refresh) },
     ) { padding ->
       queue.Column(
         Modifier.padding(padding),
@@ -75,9 +79,14 @@ class MainActivity : ComponentActivity() {
         onDismiss = { selectedPerformance = null },
         onGrade = { grade, comment ->
           transientHistory[it] = History.Entry(grade, comment)
-          /* TODO */
+          networkState.grade(it, grade, comment)
         })
     }
-    history.DumpEffect(transientHistory)
+
+    val dumpHistory = makeRace<Unit> { history.serialize(transientHistory) }
+    DisposeEffects(sequenceOf(
+      { dumpHistory(Unit) },
+      networkState::closeClient,
+    ))
   }
 }

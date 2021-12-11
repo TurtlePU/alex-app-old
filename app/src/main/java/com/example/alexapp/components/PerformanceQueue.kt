@@ -16,12 +16,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
 import com.example.alexapp.makeCancelable
 
-class PerformanceQueue(
-  private val map: MutableMap<String, MutableList<Performance>> = mutableMapOf()
-) {
+class PerformanceQueue : ViewModel() {
+  private val map: MutableMap<String, MutableList<Performance>> by mutableStateOf(mutableMapOf())
   private val size: Int get() = map.values.sumOf { it.size }
 
   private fun addAll(entries: Sequence<Performance>) {

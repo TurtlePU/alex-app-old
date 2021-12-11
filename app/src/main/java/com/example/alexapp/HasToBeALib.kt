@@ -8,12 +8,34 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 data class Pref<T>(val value: T, val setter: suspend (T) -> Unit)
+
+@Composable
+fun DisposeEffects(
+  effects: Sequence<() -> Unit>,
+  lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+) {
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_STOP) {
+        for (eff in effects) {
+          eff()
+        }
+      }
+    }
+    lifecycleOwner.lifecycle.addObserver(observer)
+    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+  }
+}
 
 @Composable
 fun Password(

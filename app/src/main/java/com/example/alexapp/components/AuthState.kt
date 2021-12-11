@@ -5,10 +5,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.example.alexapp.Password
-import com.example.alexapp.Pref
-import com.example.alexapp.makeCancelable
-import com.example.alexapp.makeRace
+import com.example.alexapp.*
 import java.util.*
 
 data class AuthState(
@@ -16,10 +13,8 @@ data class AuthState(
   private val loginPref: Pref<String>,
   private val tokenPref: Pref<String>
 ) {
-  data class AuthSnap(val host: String, val login: String, val token: String)
-
   @Composable
-  fun AuthDrawer(tryAuth: suspend (AuthSnap) -> Unit) {
+  fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Unit) {
     var dirtyLogin: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyToken: String? by rememberSaveable { mutableStateOf(null) }
 
@@ -38,7 +33,7 @@ data class AuthState(
     val (onClick, isRunning) = makeCancelable {
       val tryLogin = dirtyLogin ?: return@makeCancelable
       val tryToken = dirtyToken ?: return@makeCancelable
-      tryAuth(AuthSnap(hostPref.value, tryLogin, tryToken))
+      tryAuth(NetworkState.Snapshot(hostPref.value, tryLogin, tryToken))
       loginPref.setter(tryLogin)
       tokenPref.setter(tryToken)
     }
