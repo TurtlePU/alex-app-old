@@ -4,26 +4,28 @@ import Performance
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.alexapp.components.AuthState
 import com.example.alexapp.components.History
 import com.example.alexapp.components.NetworkState
 import com.example.alexapp.components.PerformanceQueue
 import com.example.alexapp.ui.theme.AlexAppTheme
+import kotlinx.coroutines.delay
 
 @ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
+  private val networkState: NetworkState by viewModels()
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
@@ -44,13 +46,27 @@ class MainActivity : ComponentActivity() {
     }
   }
 
+  override fun onStop() {
+    networkState.closeClient()
+    super.onStop()
+  }
+
   @Composable
   private fun AlexScaffold(authState: AuthState, history: History) {
-    val queue = PerformanceQueue()
+    val queue: PerformanceQueue = viewModel()
+
     val transientHistory by rememberSaveable { mutableStateOf(history.deserialized) }
     var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
     val scaffoldState = rememberScaffoldState()
-    val networkState = NetworkState(scaffoldState.snackbarHostState)
+
+    networkState.hostState = scaffoldState.snackbarHostState
+
+    LaunchedEffect(Unit) {
+      while (true) {
+        delay(3 * 60 * 1000)
+        history.serialize(transientHistory)
+      }
+    }
 
     Scaffold(
       scaffoldState = scaffoldState,
@@ -72,11 +88,5 @@ class MainActivity : ComponentActivity() {
           networkState.grade(it, grade, comment)
         })
     }
-
-    val dumpHistory = makeRace<Unit> { history.serialize(transientHistory) }
-    DisposeEffects(sequenceOf(
-      { dumpHistory(Unit) },
-      networkState::closeClient,
-    ))
   }
 }

@@ -5,30 +5,33 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.example.alexapp.makeCancelable
 
 class PerformanceQueue : ViewModel() {
-  private val map: MutableMap<String, MutableList<Performance>> by mutableStateOf(mutableMapOf())
+  private val map = mutableStateMapOf<String, MutableList<Performance>>()
   private val size: Int get() = map.values.sumOf { it.size }
 
   private fun addAll(entries: Sequence<Performance>) {
     for (performance in entries) {
-      map.putIfAbsent(performance.participant.category, mutableListOf())!!.add(performance)
+      map.computeIfAbsent(performance.participant.category) {
+        mutableStateListOf()
+      }.add(performance)
     }
   }
 
@@ -42,12 +45,39 @@ class PerformanceQueue : ViewModel() {
   ) {
     LazyColumn(modifier) {
       map.forEach { (category, performances) ->
-        stickyHeader { Text(category) }
+        stickyHeader {
+          Box(
+            Modifier
+              .fillMaxWidth()
+              .background(MaterialTheme.colors.background)
+            ) {
+            Text(
+              text = category,
+              fontSize = 20.sp,
+              modifier = Modifier.padding(15.dp)
+            )
+          }
+        }
+        var isFirst = true
         items(performances, key = { Pair(it.participantName, it.repertoire) }) {
-          val boxModifier = Modifier
-            .selectable(selected = isSelected(it), onClick = { select(it) })
-            .run { if (isNew(it)) background(color = MaterialTheme.colors.secondary) else this }
-          Box(boxModifier) { Text(it.participantName) }
+          if (isFirst) Divider()
+          isFirst = false
+          Box(
+            Modifier
+              .selectable(selected = isSelected(it), onClick = { select(it) })
+              .fillMaxWidth()
+              .run {
+                if (isNew(it)) background(color = MaterialTheme.colors.secondary)
+                else this
+              }
+          ) {
+            Text(
+              text = it.participantName,
+              fontSize = 20.sp,
+              modifier = Modifier.padding(15.dp),
+            )
+          }
+          Divider()
         }
       }
     }

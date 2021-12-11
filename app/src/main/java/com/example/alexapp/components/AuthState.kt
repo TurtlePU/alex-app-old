@@ -22,12 +22,11 @@ data class AuthState(
   private val tokenPref: Pref<String>
 ) {
   @Composable
-  fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Unit) {
+  fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Boolean) {
+    var dirtyHost: String by rememberSaveable { mutableStateOf(hostPref.value) }
     var dirtyLogin: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyToken: String? by rememberSaveable { mutableStateOf(null) }
 
-    val refreshHost = makeRace(hostPref.setter)
-    val refreshLogin = { it: String -> dirtyLogin = it }
     val refreshToken: () -> Unit = {
       dirtyToken = dirtyLogin?.let {
         val time = Calendar.getInstance().time
@@ -36,15 +35,18 @@ data class AuthState(
       }
     }
     val resetLocals: () -> Unit = {
+      dirtyHost = hostPref.value
       dirtyLogin = loginPref.value
       dirtyToken = tokenPref.value
     }
     val (checkCredentials, isChecking) = makeCancelable {
+      hostPref.setter(dirtyHost)
       val tryLogin = dirtyLogin ?: return@makeCancelable
       val tryToken = dirtyToken ?: return@makeCancelable
-      tryAuth(NetworkState.Snapshot(hostPref.value, tryLogin, tryToken))
-      loginPref.setter(tryLogin)
-      tokenPref.setter(tryToken)
+      if (tryAuth(NetworkState.Snapshot(hostPref.value, tryLogin, tryToken))) {
+        loginPref.setter(tryLogin)
+        tokenPref.setter(tryToken)
+      }
     }
 
     Column(
@@ -55,14 +57,14 @@ data class AuthState(
         .padding(32.dp),
     ) {
       TextField(
-        value = hostPref.value,
-        onValueChange = refreshHost,
+        value = dirtyHost,
+        onValueChange = { dirtyHost = it },
         placeholder = { Text("Host") },
         singleLine = true,
       )
       TextField(
         value = dirtyLogin ?: "",
-        onValueChange = refreshLogin,
+        onValueChange = { dirtyLogin = it },
         placeholder = { Text("Login") },
         singleLine = true,
       )

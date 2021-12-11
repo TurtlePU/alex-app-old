@@ -1,5 +1,6 @@
 package com.example.alexapp.components
 
+import GetQueue
 import Performance
 import PostAuth
 import PostGrade
@@ -17,7 +18,8 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-class NetworkState(private val hostState: SnackbarHostState) : ViewModel() {
+class NetworkState : ViewModel() {
+  lateinit var hostState: SnackbarHostState
   private var snapshot: Snapshot? by mutableStateOf(null)
 
   data class Snapshot(val host: String, val login: String, val token: String)
@@ -28,23 +30,28 @@ class NetworkState(private val hostState: SnackbarHostState) : ViewModel() {
     }
   }
 
-  suspend fun auth(snapshot: Snapshot) {
-    try {
+  suspend fun auth(snapshot: Snapshot): Boolean {
+    return try {
       val response: HttpResponse = client.post("${snapshot.host}/auth") {
         contentType(ContentType.Application.Json)
         body = PostAuth(snapshot.login, snapshot.token)
       }
-      assert(response.status == HttpStatusCode.OK)
+      assert(response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created)
       this.snapshot = snapshot
+      true
     } catch (e : Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "AUTH: Unknown error")
+      false
     }
   }
 
   suspend fun refresh(since: Int): Sequence<Performance> {
     return try {
       val (host, _, _) = snapshot!!
-      client.get("$host/queue") { body = since.toString() }
+      client.get<Array<Performance>>("$host/queue") {
+        contentType(ContentType.Application.Json)
+        body = GetQueue(since)
+      }.asSequence()
     } catch (e : Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "REFRESH: Unknown error")
       emptySequence()

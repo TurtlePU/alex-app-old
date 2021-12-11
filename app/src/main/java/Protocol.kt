@@ -32,6 +32,9 @@ data class Performance(
 data class PostAuth(val jury: Jury, val token: JuryToken)
 
 @Serializable
+data class GetQueue(val since: Int)
+
+@Serializable
 data class PostGrade(
     val jury: Jury,
     val token: JuryToken,

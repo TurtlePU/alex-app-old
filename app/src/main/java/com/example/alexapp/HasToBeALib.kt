@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.datastore.core.DataStore
@@ -18,9 +17,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -38,28 +34,10 @@ fun Context.stringPref(key: String, default: String = ""): Pref<String> {
 }
 
 @Composable
-fun DisposeEffects(
-  effects: Sequence<() -> Unit>,
-  lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
-) {
-  DisposableEffect(lifecycleOwner) {
-    val observer = LifecycleEventObserver { _, event ->
-      if (event == Lifecycle.Event.ON_STOP) {
-        for (eff in effects) {
-          eff()
-        }
-      }
-    }
-    lifecycleOwner.lifecycle.addObserver(observer)
-    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-  }
-}
-
-@Composable
 fun Password(
   value: String,
   onValueChange: (String) -> Unit = { },
-  readOnly: Boolean = true,
+  readOnly: Boolean = false,
   placeholder: String = "password",
   hideValueDescription: String? = null,
 ) {
