@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.example.alexapp.*
 import java.util.*
+import kotlin.random.Random
 
 data class AuthState(
   private val hostPref: Pref<String>,
@@ -23,7 +24,8 @@ data class AuthState(
     val refreshToken: () -> Unit = {
       dirtyToken = dirtyLogin?.let {
         val time = Calendar.getInstance().time
-        Pair(it, time).hashCode().toString(16).take(8)
+        val salt = Random.nextInt()
+        (it.hashCode() xor time.hashCode() xor salt).toString(32)
       }
     }
     val resetLocals: () -> Unit = {
@@ -38,8 +40,8 @@ data class AuthState(
       tokenPref.setter(tryToken)
     }
 
-    TextField(value = hostPref.value, onValueChange = refreshHost)
-    TextField(value = dirtyLogin ?: "", onValueChange = refreshLogin)
+    TextField(value = hostPref.value, singleLine = true, onValueChange = refreshHost)
+    TextField(value = dirtyLogin ?: "", singleLine = true, onValueChange = refreshLogin)
     Password(value = dirtyToken ?: "")
     Button(onClick = refreshToken) { Text("Refresh token") }
     Button(onClick = resetLocals) { Text("Reset to OK") }

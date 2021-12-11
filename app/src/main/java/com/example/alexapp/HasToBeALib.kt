@@ -1,5 +1,6 @@
 package com.example.alexapp
 
+import android.content.Context
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.TextField
@@ -11,13 +12,29 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
 data class Pref<T>(val value: T, val setter: suspend (T) -> Unit)
+
+@Composable
+fun Context.stringPref(key: String, default: String = ""): Pref<String> {
+  val pref = stringPreferencesKey(key)
+  val value by dataStore.data.map { it[pref] ?: default }.collectAsState(default)
+  val setter: suspend (String) -> Unit = { dataStore.edit { settings -> settings[pref] = it } }
+  return Pref(value, setter)
+}
 
 @Composable
 fun DisposeEffects(
