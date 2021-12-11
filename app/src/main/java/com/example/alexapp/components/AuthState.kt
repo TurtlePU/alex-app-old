@@ -1,10 +1,17 @@
 package com.example.alexapp.components
 
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.alexapp.*
 import java.util.*
 import kotlin.random.Random
@@ -32,7 +39,7 @@ data class AuthState(
       dirtyLogin = loginPref.value
       dirtyToken = tokenPref.value
     }
-    val (onClick, isRunning) = makeCancelable {
+    val (checkCredentials, isChecking) = makeCancelable {
       val tryLogin = dirtyLogin ?: return@makeCancelable
       val tryToken = dirtyToken ?: return@makeCancelable
       tryAuth(NetworkState.Snapshot(hostPref.value, tryLogin, tryToken))
@@ -40,11 +47,47 @@ data class AuthState(
       tokenPref.setter(tryToken)
     }
 
-    TextField(value = hostPref.value, singleLine = true, onValueChange = refreshHost)
-    TextField(value = dirtyLogin ?: "", singleLine = true, onValueChange = refreshLogin)
-    Password(value = dirtyToken ?: "")
-    Button(onClick = refreshToken) { Text("Refresh token") }
-    Button(onClick = resetLocals) { Text("Reset to OK") }
-    Button(onClick) { Text(if (isRunning) "Cancel" else "Check credentials") }
+    Column(
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center,
+      modifier = Modifier
+        .fillMaxSize()
+        .padding(32.dp),
+    ) {
+      TextField(
+        value = hostPref.value,
+        onValueChange = refreshHost,
+        placeholder = { Text("Host") },
+        singleLine = true,
+      )
+      TextField(
+        value = dirtyLogin ?: "",
+        onValueChange = refreshLogin,
+        placeholder = { Text("Login") },
+        singleLine = true,
+      )
+      Password(
+        value = dirtyToken ?: "",
+        placeholder = "Token",
+      )
+      Spacer(modifier = Modifier.padding(4.dp))
+      Row(
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        modifier = Modifier.fillMaxWidth(),
+      ) {
+        for ((onClick, imageVector) in listOf(
+          refreshToken to Icons.Filled.Refresh,
+          resetLocals to Icons.Filled.RestoreFromTrash,
+          checkCredentials to (if (isChecking) Icons.Filled.Cancel else Icons.Filled.Login)
+        )) {
+          Button(onClick = onClick) {
+            Icon(
+              imageVector = imageVector,
+              contentDescription = null,
+            )
+          }
+        }
+      }
+    }
   }
 }

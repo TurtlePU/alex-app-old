@@ -3,6 +3,7 @@ package com.example.alexapp
 import android.content.Context
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -59,6 +60,7 @@ fun Password(
   value: String,
   onValueChange: (String) -> Unit = { },
   readOnly: Boolean = true,
+  placeholder: String = "password",
   hideValueDescription: String? = null,
 ) {
   var hideValue by rememberSaveable { mutableStateOf(true) }
@@ -73,6 +75,7 @@ fun Password(
     value = value,
     onValueChange = onValueChange,
     readOnly = readOnly,
+    placeholder = { Text(placeholder) },
     visualTransformation = visualTransformation,
     trailingIcon = {
       IconButton(onClick = flipHide) {
