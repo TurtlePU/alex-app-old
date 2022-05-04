@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.alexapp.*
+import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import kotlin.random.Random
 
@@ -22,7 +23,7 @@ data class AuthState(
   private val tokenPref: Pref<String>
 ) {
   @Composable
-  fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Boolean) {
+  fun AuthDrawer(scope: CoroutineScope, tryAuth: suspend (NetworkState.Snapshot) -> Boolean) {
     var dirtyHost: String by rememberSaveable { mutableStateOf(hostPref.value) }
     var dirtyLogin: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyToken: String? by rememberSaveable { mutableStateOf(null) }
@@ -39,11 +40,11 @@ data class AuthState(
       dirtyLogin = loginPref.value
       dirtyToken = tokenPref.value
     }
-    val (checkCredentials, isChecking) = makeCancelable {
+    val (checkCredentials, isChecking) = makeCancelable(scope) {
       hostPref.setter(dirtyHost)
       val tryLogin = dirtyLogin ?: return@makeCancelable
       val tryToken = dirtyToken ?: return@makeCancelable
-      if (tryAuth(NetworkState.Snapshot(hostPref.value, tryLogin, tryToken))) {
+      if (tryAuth(NetworkState.Snapshot(dirtyHost, tryLogin, tryToken))) {
         loginPref.setter(tryLogin)
         tokenPref.setter(tryToken)
       }

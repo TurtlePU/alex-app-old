@@ -4,7 +4,6 @@ import Performance
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
@@ -24,8 +23,6 @@ import kotlinx.coroutines.delay
 
 @ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
-  private val networkState: NetworkState by viewModels()
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
@@ -46,18 +43,15 @@ class MainActivity : ComponentActivity() {
     }
   }
 
-  override fun onStop() {
-    networkState.closeClient()
-    super.onStop()
-  }
-
   @Composable
   private fun AlexScaffold(authState: AuthState, history: History) {
     val queue: PerformanceQueue = viewModel()
+    val networkState: NetworkState = viewModel()
 
     val transientHistory by rememberSaveable { mutableStateOf(history.deserialized) }
     var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
     val scaffoldState = rememberScaffoldState()
+    val scope = rememberCoroutineScope()
 
     networkState.hostState = scaffoldState.snackbarHostState
 
@@ -67,13 +61,18 @@ class MainActivity : ComponentActivity() {
         history.serialize(transientHistory)
       }
     }
+    DisposableEffect(Unit) {
+      onDispose {
+        networkState.closeClient()
+      }
+    }
 
     Scaffold(
       scaffoldState = scaffoldState,
-      drawerContent = { authState.AuthDrawer(networkState::auth) },
-      floatingActionButton = { queue.RefreshButton(networkState::refresh) },
+      drawerContent = { authState.AuthDrawer(scope, networkState::auth) },
+      floatingActionButton = { queue.RefreshButton(scope, networkState::refresh) },
     ) { padding ->
-      queue.Column(
+      queue.Performances(
         Modifier.padding(padding),
         isNew = { !transientHistory.contains(it) },
         isSelected = { selectedPerformance == it },
@@ -81,8 +80,8 @@ class MainActivity : ComponentActivity() {
       )
     }
     selectedPerformance?.let {
-      (transientHistory[it] ?: History.Entry()).GradingPopup(
-        onDismiss = { selectedPerformance = null },
+      (transientHistory[it] ?: History.Entry()).GradingPopup(scope,
+        onDismiss = { selectedPerformance = null }, it,
         onGrade = { grade, comment ->
           transientHistory[it] = History.Entry(grade, comment)
           networkState.grade(it, grade, comment)

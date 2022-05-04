@@ -22,6 +22,7 @@ data class Participant(
 
 @Serializable
 data class Performance(
+    val id: Int,
     val participant: Participant,
     val repertoire: String,
 ) {

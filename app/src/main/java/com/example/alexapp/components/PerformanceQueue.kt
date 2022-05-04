@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.example.alexapp.makeCancelable
+import kotlinx.coroutines.CoroutineScope
 
 class PerformanceQueue : ViewModel() {
   private val map = mutableStateMapOf<String, MutableList<Performance>>()
@@ -37,20 +39,21 @@ class PerformanceQueue : ViewModel() {
 
   @ExperimentalFoundationApi
   @Composable
-  fun Column(
+  fun Performances(
     modifier: Modifier = Modifier,
     isNew: (Performance) -> Boolean,
     isSelected: (Performance) -> Boolean,
     select: (Performance) -> Unit,
   ) {
     LazyColumn(modifier) {
-      map.forEach { (category, performances) ->
+      val entries = map.entries.sortedBy { it.key }
+      entries.forEach { (category, performances) ->
         stickyHeader {
           Box(
             Modifier
               .fillMaxWidth()
               .background(MaterialTheme.colors.background)
-            ) {
+          ) {
             Text(
               text = category,
               fontSize = 20.sp,
@@ -63,7 +66,7 @@ class PerformanceQueue : ViewModel() {
           if (isFirst) Divider()
           isFirst = false
           Box(
-            Modifier
+            modifier = Modifier
               .selectable(selected = isSelected(it), onClick = { select(it) })
               .fillMaxWidth()
               .run {
@@ -71,11 +74,16 @@ class PerformanceQueue : ViewModel() {
                 else this
               }
           ) {
-            Text(
-              text = it.participantName,
-              fontSize = 20.sp,
-              modifier = Modifier.padding(15.dp),
-            )
+            Column(modifier = Modifier.padding(15.dp)) {
+              Text(
+                text = it.participantName,
+                fontSize = 20.sp,
+              )
+              Text(
+                text = it.repertoire,
+                fontSize = 20.sp,
+              )
+            }
           }
           Divider()
         }
@@ -84,8 +92,8 @@ class PerformanceQueue : ViewModel() {
   }
 
   @Composable
-  fun RefreshButton(refresh: suspend (Int) -> Sequence<Performance>) {
-    val (onClick, isRunning) = makeCancelable {
+  fun RefreshButton(scope: CoroutineScope, refresh: suspend (Int) -> Sequence<Performance>) {
+    val (onClick, isRunning) = makeCancelable(scope) {
       val since = size
       val updates = refresh(since)
       Log.d(null, "Requesting updates since $since")
