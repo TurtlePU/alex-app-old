@@ -13,6 +13,11 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.alexapp.components.AuthState
 import com.example.alexapp.components.History
@@ -20,9 +25,20 @@ import com.example.alexapp.components.NetworkState
 import com.example.alexapp.components.PerformanceQueue
 import com.example.alexapp.ui.theme.AlexAppTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 
 @ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
+  private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
+  @Composable
+  private fun stringPref(key: String, default: String = ""): Pref<String> {
+    val pref = stringPreferencesKey(key)
+    val value by remember { dataStore.data.map { it[pref] ?: default } }.collectAsState(default)
+    val setter: suspend (String) -> Unit = { dataStore.edit { settings -> settings[pref] = it } }
+    return Pref(value, setter)
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
