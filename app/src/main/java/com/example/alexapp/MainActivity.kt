@@ -19,6 +19,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.alexapp.components.AuthState
 import com.example.alexapp.components.History
 import com.example.alexapp.components.NetworkState
@@ -61,46 +64,62 @@ class MainActivity : ComponentActivity() {
 
   @Composable
   private fun AlexScaffold(authState: AuthState, history: History) {
-    val queue: PerformanceQueue = viewModel()
     val networkState: NetworkState = viewModel()
+    val navController = rememberNavController()
 
-    val transientHistory by rememberUpdatedState(history.deserialized)
-    var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
-    val scaffoldState = rememberScaffoldState()
-
-    networkState.showError = { scaffoldState.snackbarHostState.showSnackbar(it) }
-
-    LaunchedEffect(Unit) {
-      while (true) {
-        delay(3 * 60 * 1000)
-        history.serialize(transientHistory)
+    NavHost(navController = navController, startDestination = "auth") {
+      composable("auth") {
+        val scaffoldState = rememberScaffoldState()
+        networkState.showError = { scaffoldState.snackbarHostState.showSnackbar(it) }
+        Scaffold(scaffoldState = scaffoldState) { padding ->
+          authState.AuthDrawer(
+            tryAuth = networkState::auth,
+            onSuccess = { navController.navigate("scaffold") },
+            modifier = Modifier.padding(padding),
+          )
+        }
       }
-    }
-    DisposableEffect(Unit) {
-      onDispose {
-        networkState.closeClient()
-      }
-    }
+      composable("scaffold") {
+        val queue: PerformanceQueue = viewModel()
 
-    Scaffold(
-      scaffoldState = scaffoldState,
-      drawerContent = { authState.AuthDrawer(networkState::auth) },
-      floatingActionButton = { queue.RefreshButton(networkState::refresh) },
-    ) { padding ->
-      queue.Performances(
-        Modifier.padding(padding),
-        isNew = { !transientHistory.contains(it) },
-        isSelected = { selectedPerformance == it },
-        select = { selectedPerformance = it },
-      )
-    }
-    selectedPerformance?.let {
-      (transientHistory[it] ?: History.Entry()).GradingPopup(it,
-        onDismiss = { selectedPerformance = null },
-        onGrade = { grade, comment ->
-          transientHistory[it] = History.Entry(grade, comment)
-          networkState.grade(it, grade, comment)
-        })
+        val transientHistory by rememberUpdatedState(history.deserialized)
+        var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
+        val scaffoldState = rememberScaffoldState()
+
+        LaunchedEffect(Unit) {
+          while (true) {
+            delay(3 * 60 * 1000)
+            history.serialize(transientHistory)
+          }
+        }
+        DisposableEffect(Unit) {
+          onDispose {
+            networkState.closeClient()
+          }
+        }
+
+        networkState.showError = { scaffoldState.snackbarHostState.showSnackbar(it) }
+
+        Scaffold(
+          scaffoldState = scaffoldState,
+          floatingActionButton = { queue.RefreshButton(networkState::refresh) },
+        ) { padding ->
+          queue.Performances(
+            Modifier.padding(padding),
+            isNew = { !transientHistory.contains(it) },
+            isSelected = { selectedPerformance == it },
+            select = { selectedPerformance = it },
+          )
+        }
+        selectedPerformance?.let {
+          (transientHistory[it] ?: History.Entry()).GradingPopup(it,
+            onDismiss = { selectedPerformance = null },
+            onGrade = { grade, comment ->
+              transientHistory[it] = History.Entry(grade, comment)
+              networkState.grade(it, grade, comment)
+            })
+        }
+      }
     }
   }
 }

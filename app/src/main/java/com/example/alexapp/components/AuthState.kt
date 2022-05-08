@@ -33,7 +33,11 @@ data class AuthState(
   }
 
   @Composable
-  fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Boolean) {
+  fun AuthDrawer(
+    tryAuth: suspend (NetworkState.Snapshot) -> Boolean,
+    onSuccess: () -> Unit,
+    modifier: Modifier = Modifier,
+  ) {
     var dirtyHost: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyLogin: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyToken: String? by rememberSaveable { mutableStateOf(null) }
@@ -54,13 +58,14 @@ data class AuthState(
       if (tryAuth(NetworkState.Snapshot(tryHost, tryLogin, tryToken))) {
         loginPref.setter(tryLogin)
         tokenPref.setter(tryToken)
+        onSuccess()
       }
     }
 
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.Center,
-      modifier = Modifier
+      modifier = modifier
         .fillMaxSize()
         .padding(32.dp),
     ) {
