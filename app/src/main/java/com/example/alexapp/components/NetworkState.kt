@@ -5,6 +5,7 @@ import Performance
 import PostAuth
 import PostGrade
 import Protocol
+import android.util.Log
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +44,7 @@ class NetworkState : ViewModel() {
       true
     } catch (e: Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "AUTH: Unknown error")
+      Log.e(null, e.toString())
       false
     }
   }
@@ -60,6 +62,7 @@ class NetworkState : ViewModel() {
       atomicResult.get().asSequence()
     } catch (e: Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "REFRESH: Unknown error")
+      Log.e(null, e.toString())
       emptySequence()
     }
   }
@@ -74,6 +77,7 @@ class NetworkState : ViewModel() {
       assert(response.status == HttpStatusCode.OK)
     } catch (e: Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "GRADE: Unknown error")
+      Log.e(null, e.toString())
     }
   }
 
