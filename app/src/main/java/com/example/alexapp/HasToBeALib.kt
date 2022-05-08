@@ -43,8 +43,6 @@ fun Password(
 ) {
   var hideValue by rememberSaveable { mutableStateOf(true) }
 
-  val flipHide: () -> Unit = { hideValue = !hideValue }
-
   val (visualTransformation, imageVector) =
     if (hideValue) Pair(PasswordVisualTransformation(), Icons.Filled.VisibilityOff)
     else Pair(VisualTransformation.None, Icons.Filled.Visibility)
@@ -56,7 +54,7 @@ fun Password(
     placeholder = { Text(placeholder) },
     visualTransformation = visualTransformation,
     trailingIcon = {
-      IconButton(onClick = flipHide) {
+      IconButton(onClick = { hideValue = !hideValue }) {
         Icon(
           imageVector = imageVector,
           contentDescription = hideValueDescription,
