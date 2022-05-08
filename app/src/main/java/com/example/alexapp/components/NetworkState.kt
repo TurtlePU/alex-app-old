@@ -67,13 +67,11 @@ class NetworkState : ViewModel() {
   suspend fun grade(performance: Performance, grade: Double, comment: String?) {
     try {
       val (host, jury, token) = snapshot.get()
-      viewModelScope.launch {
-        val response: HttpResponse = client.post("$host/grade") {
-          contentType(ContentType.Application.Json)
-          body = PostGrade(jury, token, performance, grade, comment)
-        }
-        assert(response.status == HttpStatusCode.OK)
-      }.join()
+      val response: HttpResponse = client.post("$host/grade") {
+        contentType(ContentType.Application.Json)
+        body = PostGrade(jury, token, performance, grade, comment)
+      }
+      assert(response.status == HttpStatusCode.OK)
     } catch (e: Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "GRADE: Unknown error")
     }
