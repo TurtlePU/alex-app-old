@@ -18,7 +18,7 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
 class NetworkState : ViewModel() {
@@ -52,14 +52,12 @@ class NetworkState : ViewModel() {
   suspend fun refresh(since: Int): Sequence<Performance> {
     return try {
       val (host, _, _) = snapshot.get()
-      val atomicResult = AtomicReference<Array<Performance>>()
-      viewModelScope.launch {
-        atomicResult.set(client.get<Array<Performance>>("$host/queue") {
+      withContext(viewModelScope.coroutineContext) {
+        client.get<Array<Performance>>("$host/queue") {
           contentType(ContentType.Application.Json)
           body = GetQueue(since)
-        })
-      }.join()
-      atomicResult.get().asSequence()
+        }.asSequence()
+      }
     } catch (e: Throwable) {
       hostState.showSnackbar(e.localizedMessage ?: "REFRESH: Unknown error")
       Log.e(null, e.toString())
