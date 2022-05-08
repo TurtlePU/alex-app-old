@@ -39,7 +39,7 @@ data class AuthState(
 
   @Composable
   fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Boolean) {
-    var dirtyHost: String by rememberSaveable { mutableStateOf(hostPref.value) }
+    var dirtyHost: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyLogin: String? by rememberSaveable { mutableStateOf(null) }
     var dirtyToken: String? by rememberSaveable { mutableStateOf(null) }
 
@@ -52,10 +52,11 @@ data class AuthState(
       dirtyToken = tokenPref.value
     }
     val (checkCredentials, isChecking) = makeCancelable {
-      hostPref.setter(dirtyHost)
+      val tryHost = dirtyHost ?: return@makeCancelable
+      hostPref.setter(tryHost)
       val tryLogin = dirtyLogin ?: return@makeCancelable
       val tryToken = dirtyToken ?: return@makeCancelable
-      if (tryAuth(NetworkState.Snapshot(dirtyHost, tryLogin, tryToken))) {
+      if (tryAuth(NetworkState.Snapshot(tryHost, tryLogin, tryToken))) {
         loginPref.setter(tryLogin)
         tokenPref.setter(tryToken)
       }
@@ -69,7 +70,7 @@ data class AuthState(
         .padding(32.dp),
     ) {
       TextField(
-        value = dirtyHost,
+        value = dirtyHost ?: "",
         onValueChange = { dirtyHost = it },
         placeholder = { Text("Host") },
         singleLine = true,
