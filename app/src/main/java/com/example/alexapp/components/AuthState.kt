@@ -77,7 +77,7 @@ data class AuthState(
       )
       TextField(
         value = dirtyLogin ?: "",
-        onValueChange = { dirtyLogin = it },
+        onValueChange = { dirtyLogin = it; refreshToken() },
         placeholder = { Text("Login") },
         singleLine = true,
       )
