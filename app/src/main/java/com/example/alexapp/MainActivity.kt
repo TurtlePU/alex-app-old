@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     val queue: PerformanceQueue = viewModel()
     val networkState: NetworkState = viewModel()
 
-    val transientHistory by rememberSaveable { mutableStateOf(history.deserialized) }
+    val transientHistory by rememberUpdatedState(history.deserialized)
     var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
     val scaffoldState = rememberScaffoldState()
 

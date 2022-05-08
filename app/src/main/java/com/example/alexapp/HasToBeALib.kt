@@ -28,7 +28,7 @@ data class Pref<T>(val value: T, val setter: suspend (T) -> Unit)
 @Composable
 fun Context.stringPref(key: String, default: String = ""): Pref<String> {
   val pref = stringPreferencesKey(key)
-  val value by dataStore.data.map { it[pref] ?: default }.collectAsState(default)
+  val value by remember { dataStore.data.map { it[pref] ?: default } }.collectAsState(default)
   val setter: suspend (String) -> Unit = { dataStore.edit { settings -> settings[pref] = it } }
   return Pref(value, setter)
 }
