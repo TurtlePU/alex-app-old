@@ -89,17 +89,23 @@ data class AuthState(
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier.fillMaxWidth(),
       ) {
-        for ((onClick, imageVector) in listOf(
-          refreshToken to Icons.Filled.Refresh,
-          resetLocals to Icons.Filled.RestoreFromTrash,
-          checkCredentials to (if (isChecking) Icons.Filled.Cancel else Icons.Filled.Login)
-        )) {
-          Button(onClick = onClick) {
-            Icon(
-              imageVector = imageVector,
-              contentDescription = null,
-            )
-          }
+        Button(onClick = refreshToken) {
+          Icon(
+            imageVector = Icons.Filled.Refresh,
+            contentDescription = null,
+          )
+        }
+        Button(onClick = resetLocals) {
+          Icon(
+            imageVector = Icons.Filled.RestoreFromTrash,
+            contentDescription = null,
+          )
+        }
+        Button(onClick = checkCredentials) {
+          Icon(
+            imageVector = if (isChecking) Icons.Filled.Cancel else Icons.Filled.Login,
+            contentDescription = null,
+          )
         }
       }
     }
