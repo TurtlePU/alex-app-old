@@ -1,15 +1,9 @@
 package com.example.alexapp.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.RestoreFromTrash
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,8 +11,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.alexapp.Password
 import com.example.alexapp.Pref
 import com.example.alexapp.makeCancelable
 import java.util.*
@@ -111,4 +106,35 @@ data class AuthState(
       }
     }
   }
+}
+
+@Composable
+fun Password(
+  value: String,
+  onValueChange: (String) -> Unit = { },
+  readOnly: Boolean = false,
+  placeholder: String = "password",
+  hideValueDescription: String? = null,
+) {
+  var hideValue by rememberSaveable { mutableStateOf(true) }
+
+  val (visualTransformation, imageVector) =
+    if (hideValue) Pair(PasswordVisualTransformation(), Icons.Filled.VisibilityOff)
+    else Pair(VisualTransformation.None, Icons.Filled.Visibility)
+
+  TextField(
+    value = value,
+    onValueChange = onValueChange,
+    readOnly = readOnly,
+    placeholder = { Text(placeholder) },
+    visualTransformation = visualTransformation,
+    trailingIcon = {
+      IconButton(onClick = { hideValue = !hideValue }) {
+        Icon(
+          imageVector = imageVector,
+          contentDescription = hideValueDescription,
+        )
+      }
+    },
+  )
 }

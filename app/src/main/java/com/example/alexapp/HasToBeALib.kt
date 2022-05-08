@@ -1,17 +1,7 @@
 package com.example.alexapp
 
 import android.content.Context
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -31,37 +21,6 @@ fun Context.stringPref(key: String, default: String = ""): Pref<String> {
   val value by remember { dataStore.data.map { it[pref] ?: default } }.collectAsState(default)
   val setter: suspend (String) -> Unit = { dataStore.edit { settings -> settings[pref] = it } }
   return Pref(value, setter)
-}
-
-@Composable
-fun Password(
-  value: String,
-  onValueChange: (String) -> Unit = { },
-  readOnly: Boolean = false,
-  placeholder: String = "password",
-  hideValueDescription: String? = null,
-) {
-  var hideValue by rememberSaveable { mutableStateOf(true) }
-
-  val (visualTransformation, imageVector) =
-    if (hideValue) Pair(PasswordVisualTransformation(), Icons.Filled.VisibilityOff)
-    else Pair(VisualTransformation.None, Icons.Filled.Visibility)
-
-  TextField(
-    value = value,
-    onValueChange = onValueChange,
-    readOnly = readOnly,
-    placeholder = { Text(placeholder) },
-    visualTransformation = visualTransformation,
-    trailingIcon = {
-      IconButton(onClick = { hideValue = !hideValue }) {
-        Icon(
-          imageVector = imageVector,
-          contentDescription = hideValueDescription,
-        )
-      }
-    },
-  )
 }
 
 @Composable
