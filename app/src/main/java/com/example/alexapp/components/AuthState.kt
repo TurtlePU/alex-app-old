@@ -29,6 +29,14 @@ data class AuthState(
   private val loginPref: Pref<String>,
   private val tokenPref: Pref<String>
 ) {
+  companion object {
+    private fun generateToken(
+      login: String,
+      time: Date = Calendar.getInstance().time,
+      salt: Int = Random.nextInt(),
+    ) = (login.hashCode() xor time.hashCode() xor salt).toString(32)
+  }
+
   @Composable
   fun AuthDrawer(tryAuth: suspend (NetworkState.Snapshot) -> Boolean) {
     var dirtyHost: String by rememberSaveable { mutableStateOf(hostPref.value) }
@@ -36,11 +44,7 @@ data class AuthState(
     var dirtyToken: String? by rememberSaveable { mutableStateOf(null) }
 
     val refreshToken: () -> Unit = {
-      dirtyToken = dirtyLogin?.let {
-        val time = Calendar.getInstance().time
-        val salt = Random.nextInt()
-        (it.hashCode() xor time.hashCode() xor salt).toString(32)
-      }
+      dirtyToken = dirtyLogin?.let(::generateToken)
     }
     val resetLocals: () -> Unit = {
       dirtyHost = hostPref.value
