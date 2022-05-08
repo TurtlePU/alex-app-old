@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.example.alexapp.makeCancelable
-import kotlinx.coroutines.CoroutineScope
 
 class PerformanceQueue : ViewModel() {
   private val map = mutableStateMapOf<String, MutableList<Performance>>()
@@ -92,14 +91,13 @@ class PerformanceQueue : ViewModel() {
   }
 
   @Composable
-  fun RefreshButton(scope: CoroutineScope, refresh: suspend (Int) -> Sequence<Performance>) {
-    val (onClick, isRunning) = makeCancelable(scope) {
+  fun RefreshButton(refresh: suspend (Int) -> Sequence<Performance>) {
+    val (onClick, isRunning) = makeCancelable {
       val since = size
       val updates = refresh(since)
       Log.d(null, "Requesting updates since $since")
       addAll(updates)
     }
-
     val imageVector = if (isRunning) Icons.Filled.Cancel else Icons.Filled.Refresh
     FloatingActionButton(onClick) { Icon(imageVector = imageVector, contentDescription = null) }
   }

@@ -17,7 +17,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -68,15 +67,12 @@ fun Password(
 }
 
 @Composable
-fun makeCancelable(scope: CoroutineScope, action: suspend () -> Unit): Pair<() -> Unit, Boolean> {
+fun makeCancelable(action: suspend () -> Unit): Pair<() -> Unit, Boolean> {
+  val scope = rememberCoroutineScope()
   var job: Job? by remember { mutableStateOf(null) }
   val cancelable: () -> Unit = {
-    val j = job
-    job = if (j == null) {
-      scope.launch { action(); job = null }
-    } else {
-      j.cancel(); null
-    }
+    job = job?.let { it.cancel(); null }
+      ?: scope.launch { action(); job = null }
   }
   val isRunning = job != null
   return Pair(cancelable, isRunning)

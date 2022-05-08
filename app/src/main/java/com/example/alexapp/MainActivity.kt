@@ -51,7 +51,6 @@ class MainActivity : ComponentActivity() {
     val transientHistory by rememberSaveable { mutableStateOf(history.deserialized) }
     var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
     val scaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
 
     networkState.hostState = scaffoldState.snackbarHostState
 
@@ -69,8 +68,8 @@ class MainActivity : ComponentActivity() {
 
     Scaffold(
       scaffoldState = scaffoldState,
-      drawerContent = { authState.AuthDrawer(scope, networkState::auth) },
-      floatingActionButton = { queue.RefreshButton(scope, networkState::refresh) },
+      drawerContent = { authState.AuthDrawer(networkState::auth) },
+      floatingActionButton = { queue.RefreshButton(networkState::refresh) },
     ) { padding ->
       queue.Performances(
         Modifier.padding(padding),
@@ -80,8 +79,8 @@ class MainActivity : ComponentActivity() {
       )
     }
     selectedPerformance?.let {
-      (transientHistory[it] ?: History.Entry()).GradingPopup(scope,
-        onDismiss = { selectedPerformance = null }, it,
+      (transientHistory[it] ?: History.Entry()).GradingPopup(it,
+        onDismiss = { selectedPerformance = null },
         onGrade = { grade, comment ->
           transientHistory[it] = History.Entry(grade, comment)
           networkState.grade(it, grade, comment)

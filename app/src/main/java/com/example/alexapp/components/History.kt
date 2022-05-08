@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.alexapp.Pref
 import com.example.alexapp.makeCancelable
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -32,14 +31,13 @@ class History(private val pref: Pref<String>) {
 
     @Composable
     fun GradingPopup(
-      scope: CoroutineScope,
-      onDismiss: () -> Unit,
       performance: Performance,
+      onDismiss: () -> Unit,
       onGrade: suspend (Double, String?) -> Unit
     ) {
       var comment: String? by rememberSaveable { mutableStateOf(comment) }
       var grade: Double by rememberSaveable { mutableStateOf(grade ?: 5.0) }
-      val (onClick, isRunning) = makeCancelable(scope) {
+      val (onClick, isRunning) = makeCancelable {
         onGrade(grade, comment)
         onDismiss()
       }
