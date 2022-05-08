@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
     var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
     val scaffoldState = rememberScaffoldState()
 
-    networkState.hostState = scaffoldState.snackbarHostState
+    networkState.showError = { scaffoldState.snackbarHostState.showSnackbar(it) }
 
     LaunchedEffect(Unit) {
       while (true) {

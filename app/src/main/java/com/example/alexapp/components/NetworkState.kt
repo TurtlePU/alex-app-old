@@ -6,7 +6,6 @@ import PostAuth
 import PostGrade
 import Protocol
 import android.util.Log
-import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -22,7 +21,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
 class NetworkState : ViewModel() {
-  lateinit var hostState: SnackbarHostState
+  lateinit var showError: suspend (String) -> Unit
   private val snapshot: AtomicReference<Snapshot> by mutableStateOf(AtomicReference())
 
   private val client: HttpClient = HttpClient(CIO) {
@@ -40,11 +39,11 @@ class NetworkState : ViewModel() {
         body = PostAuth(snapshot.login, snapshot.token)
       }
       assert(response.status == HttpStatusCode.OK || response.status == HttpStatusCode.Created)
-      this@NetworkState.snapshot.set(snapshot)
+      this.snapshot.set(snapshot)
       true
     } catch (e: Throwable) {
-      hostState.showSnackbar(e.localizedMessage ?: "AUTH: Unknown error")
       Log.e(null, e.toString())
+      showError(e.localizedMessage ?: "AUTH: Unknown error")
       false
     }
   }
@@ -59,14 +58,14 @@ class NetworkState : ViewModel() {
         }.asSequence()
       }
     } catch (e: Throwable) {
-      hostState.showSnackbar(e.localizedMessage ?: "REFRESH: Unknown error")
       Log.e(null, e.toString())
+      showError(e.localizedMessage ?: "REFRESH: Unknown error")
       emptySequence()
     }
   }
 
   suspend fun grade(performance: Performance, grade: Double, comment: String?) {
-    try {
+    return try {
       val (host, jury, token) = snapshot.get()
       val response: HttpResponse = client.post("$host/grade") {
         contentType(ContentType.Application.Json)
@@ -74,8 +73,8 @@ class NetworkState : ViewModel() {
       }
       assert(response.status == HttpStatusCode.OK)
     } catch (e: Throwable) {
-      hostState.showSnackbar(e.localizedMessage ?: "GRADE: Unknown error")
       Log.e(null, e.toString())
+      showError(e.localizedMessage ?: "GRADE: Unknown error")
     }
   }
 
