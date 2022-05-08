@@ -45,48 +45,49 @@ class PerformanceQueue : ViewModel() {
     select: (Performance) -> Unit,
   ) {
     LazyColumn(modifier) {
-      val entries = map.entries.sortedBy { it.key }
-      entries.forEach { (category, performances) ->
-        stickyHeader {
-          Box(
-            Modifier
-              .fillMaxWidth()
-              .background(MaterialTheme.colors.background)
-          ) {
-            Text(
-              text = category,
-              fontSize = 20.sp,
-              modifier = Modifier.padding(15.dp)
-            )
-          }
-        }
-        var isFirst = true
-        items(performances, key = { Pair(it.participantName, it.repertoire) }) {
-          if (isFirst) Divider()
-          isFirst = false
-          Box(
-            modifier = Modifier
-              .selectable(selected = isSelected(it), onClick = { select(it) })
-              .fillMaxWidth()
-              .run {
-                if (isNew(it)) background(color = MaterialTheme.colors.secondary)
-                else this
-              }
-          ) {
-            Column(modifier = Modifier.padding(15.dp)) {
+      map.entries
+        .sortedBy { it.key }
+        .forEach { (category, performances) ->
+          stickyHeader {
+            Box(
+              Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.background)
+            ) {
               Text(
-                text = it.participantName,
+                text = category,
                 fontSize = 20.sp,
-              )
-              Text(
-                text = it.repertoire,
-                fontSize = 20.sp,
+                modifier = Modifier.padding(15.dp)
               )
             }
           }
-          Divider()
+          var isFirst = true
+          items(performances, key = { Pair(it.participantName, it.repertoire) }) {
+            if (isFirst) Divider()
+            isFirst = false
+            Box(
+              modifier = Modifier
+                .selectable(selected = isSelected(it), onClick = { select(it) })
+                .fillMaxWidth()
+                .run {
+                  if (isNew(it)) background(color = MaterialTheme.colors.secondary)
+                  else this
+                }
+            ) {
+              Column(modifier = Modifier.padding(15.dp)) {
+                Text(
+                  text = it.participantName,
+                  fontSize = 20.sp,
+                )
+                Text(
+                  text = it.repertoire,
+                  fontSize = 20.sp,
+                )
+              }
+            }
+            Divider()
+          }
         }
-      }
     }
   }
 
