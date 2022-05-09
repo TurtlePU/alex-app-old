@@ -1,6 +1,7 @@
 package com.example.alexapp
 
 import Performance
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,7 +33,9 @@ import kotlinx.coroutines.flow.map
 
 @ExperimentalFoundationApi
 class MainActivity : ComponentActivity() {
-  private val dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+  companion object {
+    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+  }
 
   @Composable
   private fun stringPref(key: String, default: String = ""): Pref<String> {
