@@ -55,7 +55,7 @@ data class AuthState(
       hostPref.setter(tryHost)
       val tryLogin = dirtyLogin ?: return@makeCancelable
       val tryToken = dirtyToken ?: return@makeCancelable
-      if (tryAuth(NetworkState.Snapshot(tryHost, tryLogin, tryToken))) {
+      if (tryAuth(NetworkState.Snapshot("http://$tryHost", tryLogin, tryToken))) {
         loginPref.setter(tryLogin)
         tokenPref.setter(tryToken)
         onSuccess()
