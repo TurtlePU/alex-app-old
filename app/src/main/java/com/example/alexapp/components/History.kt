@@ -7,24 +7,38 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.StarRate
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 import com.example.alexapp.Pref
 import com.example.alexapp.makeCancelable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 
-class History(private val pref: Pref<String>) {
+class History : ViewModel() {
+  val transient = mutableStateMapOf<Performance, Entry>()
+  private lateinit var setter: suspend (String) -> Unit
+
+  companion object {
+    const val minimalJson: String = "[]"
+  }
+
+  fun setPref(pref: Pref<String>) {
+    transient.putAll(Protocol.json.decodeFromString<Map<Performance, Entry>>(pref.value))
+    setter = pref.setter
+  }
+
+  suspend fun serialize() {
+    setter(Protocol.json.encodeToString(transient))
+  }
+
   @Serializable
   data class Entry(private val grade: Double?, private val comment: String?) {
     constructor() : this(null, null)
@@ -141,16 +155,5 @@ class History(private val pref: Pref<String>) {
         },
       )
     }
-  }
-
-  companion object {
-    const val minimalJson: String = "[]"
-  }
-
-  val deserialized: MutableMap<Performance, Entry>
-    get() = Protocol.json.decodeFromString(pref.value)
-
-  suspend fun serialize(value: MutableMap<Performance, Entry>) {
-    pref.setter(Protocol.json.encodeToString(value))
   }
 }

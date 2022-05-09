@@ -56,9 +56,6 @@ class MainActivity : ComponentActivity() {
               stringPref("login"),
               stringPref("token"),
             ),
-            History(
-              stringPref("history", default = History.minimalJson),
-            ),
           )
         }
       }
@@ -66,10 +63,15 @@ class MainActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun AlexScaffold(authState: AuthState, history: History) {
+  private fun AlexScaffold(authState: AuthState) {
     val networkState: NetworkState = viewModel()
-    val navController = rememberNavController()
+    DisposableEffect(Unit) {
+      onDispose {
+        networkState.closeClient()
+      }
+    }
 
+    val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "auth") {
       composable("auth") {
         val scaffoldState = rememberScaffoldState()
@@ -84,23 +86,18 @@ class MainActivity : ComponentActivity() {
       }
       composable("scaffold") {
         val queue: PerformanceQueue = viewModel()
+        val history: History = viewModel()
 
-        val transientHistory by rememberUpdatedState(history.deserialized)
         var selectedPerformance by rememberSaveable { mutableStateOf(null as Performance?) }
         val scaffoldState = rememberScaffoldState()
 
+        history.setPref(stringPref("history", default = History.minimalJson))
         LaunchedEffect(Unit) {
           while (true) {
             delay(3 * 60 * 1000)
-            history.serialize(transientHistory)
+            history.serialize()
           }
         }
-        DisposableEffect(Unit) {
-          onDispose {
-            networkState.closeClient()
-          }
-        }
-
         networkState.showError = { scaffoldState.snackbarHostState.showSnackbar(it) }
 
         Scaffold(
@@ -109,16 +106,16 @@ class MainActivity : ComponentActivity() {
         ) { padding ->
           queue.Performances(
             Modifier.padding(padding),
-            isNew = { !transientHistory.contains(it) },
+            isNew = { !history.transient.contains(it) },
             isSelected = { selectedPerformance == it },
             select = { selectedPerformance = it },
           )
         }
         selectedPerformance?.let {
-          (transientHistory[it] ?: History.Entry()).GradingPopup(it,
+          (history.transient[it] ?: History.Entry()).GradingPopup(it,
             onDismiss = { selectedPerformance = null },
             onGrade = { grade, comment ->
-              transientHistory[it] = History.Entry(grade, comment)
+              history.transient[it] = History.Entry(grade, comment)
               networkState.grade(it, grade, comment)
             })
         }
