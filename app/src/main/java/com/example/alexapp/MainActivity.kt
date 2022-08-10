@@ -48,23 +48,26 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
-      AlexAppTheme {
-        Surface(color = MaterialTheme.colors.background) {
-          AlexScaffold(
-            AuthState(
-              stringPref("host"),
-              stringPref("login"),
-              stringPref("token"),
-            ),
-          )
-        }
+      AlexApp {
+        AlexScaffold(
+          AuthState(
+            stringPref("host"),
+            stringPref("login"),
+            stringPref("token"),
+          ),
+          viewModel()
+        )
       }
     }
   }
 
   @Composable
-  private fun AlexScaffold(authState: AuthState) {
-    val networkState: NetworkState = viewModel()
+  private fun AlexApp(content: @Composable () -> Unit) = AlexAppTheme {
+    Surface(color = MaterialTheme.colors.background, content = content)
+  }
+
+  @Composable
+  private fun AlexScaffold(authState: AuthState, networkState: NetworkState) {
     DisposableEffect(Unit) {
       onDispose {
         networkState.closeClient()
